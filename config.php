@@ -4,13 +4,14 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
+// === НАСТРОЙКИ ДЛЯ ХОСТИНГА ===
+// Замени эти значения на свои!
 $config = [
-    'db_host' => 'localhost',
-    'db_name' => 'bezdarmoney',
-    'db_user' => 'root',
-    'db_pass' => '',
-    'fragment_api_key' => 'f3de8ad1-f911-431b-9266-82bf65276ec8',
-    'ton_wallet' => 'UQAXba2HyRqtUiZLIk5KnHznrD47jhy0FxcIZAu2rSZzmVEJ'
+    'db_host' => 'localhost', // Обычно localhost
+    'db_name' => 'bezdarmoney', // Имя БД которое создашь
+    'db_user' => 'root', // Имя пользователя БД
+    'db_pass' => '', // Пароль от БД (оставь пустым если нет)
+    'admin_password' => 'bezdar123' // Пароль для админки
 ];
 
 try {
@@ -21,9 +22,10 @@ try {
     );
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch(PDOException $e) {
-    die(json_encode(['error' => 'Database connection failed']));
+    die(json_encode(['error' => 'Database connection failed: ' . $e->getMessage()]));
 }
 
+// Функции работы с БД
 function getUserBalance($user_id) {
     global $pdo;
     $stmt = $pdo->prepare("SELECT balance FROM users WHERE user_id = ?");
@@ -43,3 +45,4 @@ function updateUserBalance($user_id, $amount) {
     $stmt = $pdo->prepare("UPDATE users SET balance = balance + ? WHERE user_id = ?");
     return $stmt->execute([$amount, $user_id]);
 }
+?>
