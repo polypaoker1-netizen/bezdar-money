@@ -1,7 +1,6 @@
 CREATE DATABASE IF NOT EXISTS bezdarmoney;
 USE bezdarmoney;
 
--- Пользователи
 CREATE TABLE users (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id VARCHAR(50) UNIQUE NOT NULL,
@@ -9,7 +8,6 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Депозиты
 CREATE TABLE deposits (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id VARCHAR(50) NOT NULL,
@@ -22,7 +20,6 @@ CREATE TABLE deposits (
     updated_at TIMESTAMP NULL
 );
 
--- Выводы
 CREATE TABLE withdrawals (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id VARCHAR(50) NOT NULL,
@@ -34,7 +31,6 @@ CREATE TABLE withdrawals (
     updated_at TIMESTAMP NULL
 );
 
--- Транзакции
 CREATE TABLE transactions (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id VARCHAR(50) NOT NULL,
