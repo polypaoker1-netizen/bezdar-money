@@ -718,6 +718,9 @@
                             <div class="btn-purple" style="text-align: center; padding: 12px; cursor: pointer;">📥 Импорт БД</div>
                         </label>
                     </div>
+                    <div style="margin-top: 10px;">
+                        <button onclick="resetDB()" class="btn-red" style="width: 100%; margin-top: 5px;">🔄 Сбросить БД (ОПАСНО!)</button>
+                    </div>
                     <p style="margin-top: 10px; font-size: 12px; opacity: 0.7;">
                         Текущий размер БД: <span id="dbSize">0</span> байт
                     </p>
@@ -728,12 +731,14 @@
 
     <script>
         // ====================
-        // БАЗА ДАННЫХ
+        // БАЗА ДАННЫХ - ИСПРАВЛЕННАЯ
         // ====================
         const DB_NAME = 'bezdarmoney_db';
         const ADMIN_PASS = 'Bezdarnik747';
         let currentUser = null;
-        let gameSettings = {
+        
+        // НАСТРОЙКИ ПО УМОЛЧАНИЮ
+        const DEFAULT_SETTINGS = {
             mines: { 
                 winChance: 10,
                 maxMultiplier: 25
@@ -752,50 +757,154 @@
             }
         };
         
-        // Инициализация базы данных
+        let gameSettings = { ...DEFAULT_SETTINGS };
+        
+        // ИНИЦИАЛИЗАЦИЯ БАЗЫ ДАННЫХ (ИСПРАВЛЕННАЯ)
         function initDB() {
-            if (!localStorage.getItem(DB_NAME)) {
-                const db = {
+            console.log('Инициализация базы данных...');
+            
+            let db = localStorage.getItem(DB_NAME);
+            
+            if (!db) {
+                console.log('БД не найдена, создаём новую...');
+                const newDB = {
                     users: {},
                     promocodes: {},
                     history: [],
-                    settings: gameSettings,
+                    settings: DEFAULT_SETTINGS,
                     stats: {
                         totalBets: 0,
                         totalWins: 0,
                         totalPayout: 0
                     }
                 };
-                localStorage.setItem(DB_NAME, JSON.stringify(db));
+                localStorage.setItem(DB_NAME, JSON.stringify(newDB));
+                console.log('Новая БД создана');
+                gameSettings = DEFAULT_SETTINGS;
             } else {
-                const db = JSON.parse(localStorage.getItem(DB_NAME));
-                if (db.settings) {
-                    gameSettings = db.settings;
+                try {
+                    const parsedDB = JSON.parse(db);
+                    console.log('БД загружена:', parsedDB);
+                    
+                    // Восстанавливаем настройки если они есть
+                    if (parsedDB.settings) {
+                        gameSettings = parsedDB.settings;
+                        console.log('Настройки загружены:', gameSettings);
+                    } else {
+                        parsedDB.settings = DEFAULT_SETTINGS;
+                        gameSettings = DEFAULT_SETTINGS;
+                        saveDB(parsedDB);
+                    }
+                    
+                    // Проверяем структуру пользователей
+                    if (!parsedDB.users) {
+                        parsedDB.users = {};
+                        saveDB(parsedDB);
+                    }
+                    
+                } catch (error) {
+                    console.error('Ошибка загрузки БД:', error);
+                    // Создаём новую БД при ошибке
+                    const newDB = {
+                        users: {},
+                        promocodes: {},
+                        history: [],
+                        settings: DEFAULT_SETTINGS,
+                        stats: {
+                            totalBets: 0,
+                            totalWins: 0,
+                            totalPayout: 0
+                        }
+                    };
+                    localStorage.setItem(DB_NAME, JSON.stringify(newDB));
+                    gameSettings = DEFAULT_SETTINGS;
                 }
             }
+            
             updateDBInfo();
+            return true;
         }
         
+        // ПОЛУЧИТЬ БАЗУ ДАННЫХ (ИСПРАВЛЕННАЯ)
         function getDB() {
-            return JSON.parse(localStorage.getItem(DB_NAME));
-        }
-        
-        function saveDB(db) {
-            localStorage.setItem(DB_NAME, JSON.stringify(db));
-            updateDBInfo();
-        }
-        
-        function updateDBInfo() {
-            const dbSize = JSON.stringify(getDB()).length;
-            const dbSizeElement = document.getElementById('dbSize');
-            if (dbSizeElement) {
-                dbSizeElement.textContent = dbSize;
+            try {
+                const db = localStorage.getItem(DB_NAME);
+                if (!db) {
+                    console.log('БД не найдена в getDB, инициализируем...');
+                    initDB();
+                    return JSON.parse(localStorage.getItem(DB_NAME));
+                }
+                return JSON.parse(db);
+            } catch (error) {
+                console.error('Ошибка получения БД:', error);
+                initDB();
+                return JSON.parse(localStorage.getItem(DB_NAME));
             }
         }
         
+        // СОХРАНИТЬ БАЗУ ДАННЫХ (ИСПРАВЛЕННАЯ)
+        function saveDB(db) {
+            try {
+                localStorage.setItem(DB_NAME, JSON.stringify(db));
+                updateDBInfo();
+                console.log('БД сохранена успешно');
+                return true;
+            } catch (error) {
+                console.error('Ошибка сохранения БД:', error);
+                alert('Ошибка сохранения данных!');
+                return false;
+            }
+        }
+        
+        // ОБНОВИТЬ ИНФОРМАЦИЮ О БД
+        function updateDBInfo() {
+            try {
+                const db = getDB();
+                const dbSize = JSON.stringify(db).length;
+                const dbSizeElement = document.getElementById('dbSize');
+                if (dbSizeElement) {
+                    dbSizeElement.textContent = dbSize;
+                }
+                
+                // Обновляем статистику
+                const usersCount = Object.keys(db.users || {}).length;
+                const historyCount = (db.history || []).length;
+                const promosCount = Object.keys(db.promocodes || {}).length;
+                
+                console.log('Статистика БД:', {
+                    users: usersCount,
+                    history: historyCount,
+                    promocodes: promosCount,
+                    size: dbSize + ' байт'
+                });
+            } catch (error) {
+                console.error('Ошибка обновления информации о БД:', error);
+            }
+        }
+        
+        // СОЗДАТЬ BACKUP
         function backupDB() {
-            const db = getDB();
-            localStorage.setItem(DB_NAME + '_backup_' + Date.now(), JSON.stringify(db));
+            try {
+                const db = getDB();
+                const backupName = DB_NAME + '_backup_' + Date.now();
+                localStorage.setItem(backupName, JSON.stringify(db));
+                console.log('Backup создан:', backupName);
+            } catch (error) {
+                console.error('Ошибка создания backup:', error);
+            }
+        }
+        
+        // СБРОС БАЗЫ ДАННЫХ
+        function resetDB() {
+            if (confirm('ВНИМАНИЕ! Это удалит всех пользователей, историю и настройки. Продолжить?')) {
+                localStorage.removeItem(DB_NAME);
+                localStorage.removeItem('current_user');
+                currentUser = null;
+                gameSettings = { ...DEFAULT_SETTINGS };
+                
+                alert('База данных сброшена! Страница будет перезагружена.');
+                location.reload();
+            }
         }
         
         // ====================
@@ -830,9 +939,10 @@
                 return;
             }
             
+            // Создаём нового пользователя
             db.users[username] = {
                 password: password,
-                balance: 1,
+                balance: 1.0,
                 wager: 0,
                 created: new Date().toISOString(),
                 stats: { 
@@ -844,12 +954,15 @@
                 lastLogin: new Date().toISOString()
             };
             
-            saveDB(db);
-            showMessage(message, '✅ Регистрация успешна! Вы получили 1 ⭐', 'success');
-            
-            setTimeout(() => {
-                loginUser(username, password);
-            }, 1500);
+            if (saveDB(db)) {
+                showMessage(message, '✅ Регистрация успешна! Вы получили 1 ⭐', 'success');
+                
+                setTimeout(() => {
+                    loginUser(username, password);
+                }, 1500);
+            } else {
+                showMessage(message, 'Ошибка сохранения данных', 'error');
+            }
         }
         
         function login() {
@@ -862,23 +975,31 @@
             const db = getDB();
             const message = document.getElementById('loginMessage');
             
-            if (!db.users[username]) {
+            if (!db.users || !db.users[username]) {
                 showMessage(message, 'Пользователь не найден', 'error');
                 return;
             }
             
-            if (db.users[username].password !== password) {
+            const user = db.users[username];
+            
+            if (user.password !== password) {
                 showMessage(message, 'Неверный пароль', 'error');
                 return;
             }
             
-            db.users[username].lastLogin = new Date().toISOString();
-            saveDB(db);
+            // Обновляем время последнего входа
+            user.lastLogin = new Date().toISOString();
+            db.users[username] = user;
             
-            currentUser = username;
-            localStorage.setItem('current_user', username);
-            showMainInterface();
-            updateUI();
+            if (saveDB(db)) {
+                currentUser = username;
+                localStorage.setItem('current_user', username);
+                showMainInterface();
+                updateUI();
+                hideModal();
+            } else {
+                showMessage(message, 'Ошибка входа', 'error');
+            }
         }
         
         function showMessage(element, text, type) {
@@ -1083,6 +1204,11 @@
             const db = getDB();
             const user = db.users[currentUser];
             
+            if (!user) {
+                alert('Ошибка: пользователь не найден!');
+                return;
+            }
+            
             if (bet > user.balance) {
                 alert('Недостаточно звёзд!');
                 return;
@@ -1235,6 +1361,11 @@
             const db = getDB();
             const user = db.users[currentUser];
             
+            if (!user) {
+                alert('Ошибка: пользователь не найден!');
+                return;
+            }
+            
             if (bet > user.balance) {
                 alert('Недостаточно звёзд!');
                 return;
@@ -1342,6 +1473,11 @@
             const db = getDB();
             const user = db.users[currentUser];
             
+            if (!user) {
+                alert('Ошибка: пользователь не найден!');
+                return;
+            }
+            
             if (bet > user.balance) {
                 alert('Недостаточно звёзд!');
                 return;
@@ -1365,6 +1501,11 @@
             const db = getDB();
             const user = db.users[currentUser];
             
+            if (!user) {
+                alert('Ошибка: пользователь не найден!');
+                return;
+            }
+            
             if (bet > user.balance) {
                 alert('Недостаточно звёзд!');
                 return;
@@ -1385,6 +1526,11 @@
             
             const db = getDB();
             const user = db.users[currentUser];
+            
+            if (!user) {
+                alert('Ошибка: пользователь не найден!');
+                return;
+            }
             
             if (bet > user.balance) {
                 alert('Недостаточно звёзд!');
@@ -1450,6 +1596,11 @@
             const db = getDB();
             const user = db.users[currentUser];
             
+            if (!user) {
+                alert('Ошибка: пользователь не найден в БД!');
+                return;
+            }
+            
             user.balance -= bet;
             user.balance += winAmount;
             user.wager = (user.wager || 0) + bet;
@@ -1476,26 +1627,29 @@
                 balanceAfter: user.balance
             });
             
-            saveDB(db);
-            updateUI();
-            
-            const gameArea = document.getElementById('gameArea');
-            gameArea.innerHTML = `
-                <h3 style="color: #ffd700; text-align: center;">${getGameName(gameType)}</h3>
-                <div class="game-result ${win ? 'win' : 'lose'}">
-                    ${resultText}<br>
-                    <div style="font-size: 32px; margin-top: 10px;">${win ? '🎉 ПОБЕДА!' : '💥 ПРОИГРЫШ'}</div>
-                </div>
-                <div style="text-align: center; font-size: 20px; margin: 20px 0;">
-                    <p>Ставка: <span style="color: #ffd700;">${bet.toFixed(2)} ⭐</span></p>
-                    <p>Выигрыш: <span style="color: #00ff88;">${winAmount.toFixed(2)} ⭐</span></p>
-                    <p>Новый баланс: <span style="color: #ffd700; font-size: 24px;">${user.balance.toFixed(2)} ⭐</span></p>
-                </div>
-                <div style="display: flex; gap: 10px; justify-content: center;">
-                    <button onclick="startGame('${gameType}')">Играть снова</button>
-                    <button onclick="gameArea.style.display='none'; updateUI();">Закрыть</button>
-                </div>
-            `;
+            if (saveDB(db)) {
+                updateUI();
+                
+                const gameArea = document.getElementById('gameArea');
+                gameArea.innerHTML = `
+                    <h3 style="color: #ffd700; text-align: center;">${getGameName(gameType)}</h3>
+                    <div class="game-result ${win ? 'win' : 'lose'}">
+                        ${resultText}<br>
+                        <div style="font-size: 32px; margin-top: 10px;">${win ? '🎉 ПОБЕДА!' : '💥 ПРОИГРЫШ'}</div>
+                    </div>
+                    <div style="text-align: center; font-size: 20px; margin: 20px 0;">
+                        <p>Ставка: <span style="color: #ffd700;">${bet.toFixed(2)} ⭐</span></p>
+                        <p>Выигрыш: <span style="color: #00ff88;">${winAmount.toFixed(2)} ⭐</span></p>
+                        <p>Новый баланс: <span style="color: #ffd700; font-size: 24px;">${user.balance.toFixed(2)} ⭐</span></p>
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <button onclick="startGame('${gameType}')">Играть снова</button>
+                        <button onclick="gameArea.style.display='none'; updateUI();">Закрыть</button>
+                    </div>
+                `;
+            } else {
+                alert('Ошибка сохранения результата игры!');
+            }
         }
         
         function sleep(ms) {
@@ -1520,6 +1674,11 @@
             const db = getDB();
             const user = db.users[currentUser];
             
+            if (!user) {
+                alert('Ошибка: пользователь не найден!');
+                return;
+            }
+            
             const cashback = Math.floor((user.wager || 0) * 0.05);
             if (cashback <= 0) {
                 alert('Кешбек пока не доступен');
@@ -1529,10 +1688,13 @@
             user.balance += cashback;
             user.wager = 0;
             
-            saveDB(db);
-            updateUI();
-            alert(`🎉 Кешбек ${cashback} ⭐ начислен!`);
-            hideModal();
+            if (saveDB(db)) {
+                updateUI();
+                alert(`🎉 Кешбек ${cashback} ⭐ начислен!`);
+                hideModal();
+            } else {
+                alert('Ошибка начисления кешбека!');
+            }
         }
         
         // Промокоды
@@ -1565,20 +1727,25 @@
             promo.used.push(currentUser);
             db.promocodes[code] = promo;
             
-            saveDB(db);
-            updateUI();
-            showMessage(message, `🎉 Промокод активирован! +${promo.amount} ⭐`, 'success');
-            document.getElementById('promoCode').value = '';
+            if (saveDB(db)) {
+                updateUI();
+                showMessage(message, `🎉 Промокод активирован! +${promo.amount} ⭐`, 'success');
+                document.getElementById('promoCode').value = '';
+            } else {
+                showMessage(message, 'Ошибка активации промокода', 'error');
+            }
         }
         
         // ====================
-        // АДМИН ПАНЕЛЬ
+        // АДМИН ПАНЕЛЬ (ИСПРАВЛЕННАЯ)
         // ====================
         document.getElementById('adminPass')?.addEventListener('input', function() {
             const panel = document.getElementById('adminPanel');
-            panel.style.display = this.value === ADMIN_PASS ? 'block' : 'none';
             if (this.value === ADMIN_PASS) {
+                panel.style.display = 'block';
                 updateChanceSliders();
+            } else {
+                panel.style.display = 'none';
             }
         });
         
@@ -1656,11 +1823,15 @@
             gameSettings.slots.jackpotMultiplier = parseInt(document.getElementById('slotsMulti').value);
             
             db.settings = gameSettings;
-            saveDB(db);
             
-            alert('✅ Настройки шансов сохранены!');
+            if (saveDB(db)) {
+                alert('✅ Настройки шансов сохранены!');
+            } else {
+                alert('❌ Ошибка сохранения настроек!');
+            }
         }
         
+        // ВЫДАЧА ЗВЁЗД (ИСПРАВЛЕННАЯ)
         function adminAdd() {
             const username = document.getElementById('adminUser').value.trim();
             const amount = parseInt(document.getElementById('adminAmount').value);
@@ -1679,14 +1850,23 @@
             }
             
             db.users[username].balance += amount;
-            saveDB(db);
-            alert(`✅ Пользователю ${username} выдано ${amount} ⭐`);
             
-            if (username === currentUser) {
-                updateUI();
+            if (saveDB(db)) {
+                alert(`✅ Пользователю ${username} выдано ${amount} ⭐`);
+                
+                if (username === currentUser) {
+                    updateUI();
+                }
+                
+                // Очищаем поля
+                document.getElementById('adminUser').value = '';
+                document.getElementById('adminAmount').value = '';
+            } else {
+                alert('❌ Ошибка выдачи звёзд!');
             }
         }
         
+        // ЗАБРАТЬ ЗВЁЗДЫ (ИСПРАВЛЕННАЯ)
         function adminRemove() {
             const username = document.getElementById('adminUser').value.trim();
             const amount = parseInt(document.getElementById('adminAmount').value);
@@ -1705,14 +1885,23 @@
             }
             
             db.users[username].balance = Math.max(0, db.users[username].balance - amount);
-            saveDB(db);
-            alert(`✅ У пользователя ${username} списано ${amount} ⭐`);
             
-            if (username === currentUser) {
-                updateUI();
+            if (saveDB(db)) {
+                alert(`✅ У пользователя ${username} списано ${amount} ⭐`);
+                
+                if (username === currentUser) {
+                    updateUI();
+                }
+                
+                // Очищаем поля
+                document.getElementById('adminUser').value = '';
+                document.getElementById('adminAmount').value = '';
+            } else {
+                alert('❌ Ошибка списания звёзд!');
             }
         }
         
+        // СОЗДАНИЕ ПРОМОКОДА (ИСПРАВЛЕННОЕ)
         function createPromo() {
             const code = document.getElementById('newPromo').value.trim().toUpperCase();
             const amount = parseInt(document.getElementById('newPromoAmount').value);
@@ -1738,26 +1927,35 @@
                 used: []
             };
             
-            saveDB(db);
-            alert(`✅ Промокод ${code} создан на сумму ${amount} ⭐`);
-            
-            document.getElementById('newPromo').value = '';
-            document.getElementById('newPromoAmount').value = '';
+            if (saveDB(db)) {
+                alert(`✅ Промокод ${code} создан на сумму ${amount} ⭐`);
+                
+                // Очищаем поля
+                document.getElementById('newPromo').value = '';
+                document.getElementById('newPromoAmount').value = '';
+            } else {
+                alert('❌ Ошибка создания промокода!');
+            }
         }
         
         // ====================
         // ЭКСПОРТ/ИМПОРТ БАЗЫ ДАННЫХ
         // ====================
         function exportDB() {
-            const db = getDB();
-            const dataStr = JSON.stringify(db, null, 2);
-            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-            
-            const exportFileDefaultName = 'bezdarmoney_db.json';
-            const linkElement = document.createElement('a');
-            linkElement.setAttribute('href', dataUri);
-            linkElement.setAttribute('download', exportFileDefaultName);
-            linkElement.click();
+            try {
+                const db = getDB();
+                const dataStr = JSON.stringify(db, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                
+                const exportFileDefaultName = 'bezdarmoney_db.json';
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+                alert('✅ База данных экспортирована!');
+            } catch (error) {
+                alert('❌ Ошибка экспорта БД: ' + error.message);
+            }
         }
         
         function importDB(event) {
@@ -1773,21 +1971,39 @@
                 try {
                     const db = JSON.parse(e.target.result);
                     localStorage.setItem(DB_NAME, JSON.stringify(db));
-                    alert('✅ База данных успешно импортирована!');
+                    alert('✅ База данных успешно импортирована! Страница будет перезагружена.');
                     location.reload();
                 } catch (error) {
-                    alert('Ошибка при импорте базы данных: ' + error.message);
+                    alert('❌ Ошибка при импорте базы данных: ' + error.message);
                 }
             };
             reader.readAsText(file);
         }
         
         // ====================
-        // ИНИЦИАЛИЗАЦИЯ
+        // ИНИЦИАЛИЗАЦИЯ (ИСПРАВЛЕННАЯ)
         // ====================
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('Документ загружен, инициализируем БД...');
+            
+            // Инициализируем БД
             initDB();
             
+            // Проверяем авторизацию
+            const savedUser = localStorage.getItem('current_user');
+            const db = getDB();
+            
+            if (savedUser && db.users && db.users[savedUser]) {
+                console.log('Автоматический вход для пользователя:', savedUser);
+                currentUser = savedUser;
+                showMainInterface();
+                updateUI();
+            } else {
+                console.log('Пользователь не авторизован, показываем форму входа');
+                showAuthSection();
+            }
+            
+            // Закрытие модальных окон
             window.onclick = function(event) {
                 if (event.target.classList.contains('modal')) {
                     hideModal();
@@ -1800,14 +2016,15 @@
                 }
             });
             
-            const savedUser = localStorage.getItem('current_user');
-            const db = getDB();
-            if (savedUser && db.users[savedUser]) {
-                currentUser = savedUser;
-                showMainInterface();
-                updateUI();
-            }
+            // Показываем статистику БД в консоли для отладки
+            console.log('Инициализация завершена. Текущая БД:', getDB());
         });
+        
+        function showAuthSection() {
+            // Функция для показа секции авторизации
+            document.getElementById('authSection').style.display = 'block';
+            document.getElementById('mainSection').style.display = 'none';
+        }
     </script>
 </body>
 </html>
