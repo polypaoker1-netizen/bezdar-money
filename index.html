@@ -1,0 +1,1813 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⭐ BezdarMoney</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background: linear-gradient(135deg, #0c0c1d 0%, #1a1a2e 100%); 
+            color: white; 
+            min-height: 100vh;
+            background-attachment: fixed;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        
+        /* Авторизация */
+        #authSection { margin-top: 80px; }
+        .auth-box { 
+            background: rgba(26, 26, 46, 0.9); 
+            padding: 40px; 
+            border-radius: 20px; 
+            max-width: 450px; 
+            margin: 0 auto;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .tabs { display: flex; margin-bottom: 30px; border-radius: 12px; overflow: hidden; }
+        .tab { 
+            flex: 1; 
+            padding: 15px; 
+            background: #2d2d44; 
+            border: none; 
+            color: white; 
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .tab.active { 
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); 
+            color: #000; 
+            font-weight: bold;
+        }
+        .auth-form { display: none; }
+        .auth-form.active { display: block; }
+        input, select, button { 
+            width: 100%; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 10px; 
+            border: none; 
+            font-size: 16px;
+        }
+        input, select { 
+            background: rgba(255,255,255,0.1); 
+            color: white; 
+            border: 2px solid rgba(255,215,0,0.3);
+            transition: border 0.3s;
+        }
+        input:focus, select:focus { 
+            outline: none; 
+            border-color: #ffd700; 
+            box-shadow: 0 0 10px rgba(255,215,0,0.3);
+        }
+        button { 
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); 
+            color: #000; 
+            font-weight: bold; 
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 5px 15px rgba(255,215,0,0.3);
+        }
+        .message { 
+            padding: 15px; 
+            margin: 15px 0; 
+            border-radius: 10px; 
+            display: none;
+            text-align: center;
+            font-weight: bold;
+        }
+        .error { background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); }
+        .success { background: linear-gradient(135deg, #00ff88 0%, #00e676 100%); color: #000; }
+        
+        /* Основной интерфейс */
+        #mainSection { display: none; }
+        .header { 
+            background: rgba(26, 26, 46, 0.9); 
+            padding: 25px 30px; 
+            border-radius: 20px; 
+            margin-bottom: 30px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+        .logo { 
+            font-size: 28px; 
+            font-weight: bold; 
+            color: #ffd700; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px;
+            text-shadow: 0 0 10px rgba(255,215,0,0.5);
+        }
+        .balance { 
+            font-size: 26px; 
+            color: #ffd700; 
+            background: rgba(255,215,0,0.1);
+            padding: 15px 25px;
+            border-radius: 12px;
+            border: 2px solid rgba(255,215,0,0.3);
+        }
+        .controls { display: flex; gap: 12px; flex-wrap: wrap; }
+        .controls button { 
+            width: auto; 
+            padding: 12px 24px; 
+            border-radius: 10px;
+            font-size: 14px;
+        }
+        .btn-green { background: linear-gradient(135deg, #00ff88 0%, #00e676 100%); }
+        .btn-red { background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); color: white; }
+        .btn-blue { background: linear-gradient(135deg, #00adb5 0%, #0097a7 100%); }
+        .btn-purple { background: linear-gradient(135deg, #9d50bb 0%, #6e48aa 100%); }
+        
+        /* Игры */
+        .games-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+            gap: 25px; 
+            margin: 40px 0; 
+        }
+        .game-card { 
+            background: rgba(26, 26, 46, 0.8); 
+            padding: 25px; 
+            border-radius: 15px; 
+            text-align: center; 
+            cursor: pointer; 
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        .game-card:hover { 
+            transform: translateY(-10px) scale(1.03); 
+            border-color: #ffd700;
+            box-shadow: 0 15px 30px rgba(255,215,0,0.2);
+            background: rgba(26, 26, 46, 0.95);
+        }
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #ffd700, #ffed4e, #ffd700);
+        }
+        .game-icon { 
+            font-size: 50px; 
+            margin-bottom: 15px; 
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .game-card h4 { 
+            margin-bottom: 10px; 
+            font-size: 20px;
+            color: #ffd700;
+        }
+        
+        /* Игровая область */
+        .game-area { 
+            background: rgba(26, 26, 46, 0.95); 
+            padding: 40px; 
+            border-radius: 20px; 
+            margin: 30px 0; 
+            display: none;
+            border: 2px solid rgba(255,215,0,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        
+        /* Поле мин */
+        .mines-field {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin: 30px 0;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .mine-cell {
+            width: 70px;
+            height: 70px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid rgba(255,215,0,0.3);
+        }
+        .mine-cell:hover:not(.revealed) {
+            background: rgba(255,215,0,0.2);
+            transform: scale(1.05);
+        }
+        .mine-cell.revealed {
+            cursor: default;
+        }
+        .mine-cell.safe {
+            background: rgba(0,255,136,0.3);
+            border-color: #00ff88;
+        }
+        .mine-cell.mine {
+            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+            border-color: #ff416c;
+        }
+        
+        /* Краш игра */
+        .crash-game {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .crash-graph {
+            height: 200px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            position: relative;
+            margin: 30px 0;
+            overflow: hidden;
+            border: 2px solid rgba(255,215,0,0.3);
+        }
+        .crash-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(255,215,0,0.5), rgba(255,215,0,0.8));
+            transition: width 1s linear;
+        }
+        .crash-plane {
+            position: absolute;
+            right: -40px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 30px;
+            transition: right 1s linear;
+        }
+        .crash-multiplier {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+            color: #ffd700;
+            font-weight: bold;
+        }
+        .min-cashout {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: #ff416c;
+            font-size: 14px;
+        }
+        
+        /* Слоты */
+        .slot-machine {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 40px 0;
+        }
+        .slot-reel {
+            width: 100px;
+            height: 100px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            border: 3px solid rgba(255,215,0,0.5);
+            overflow: hidden;
+        }
+        .slot-reel span {
+            display: block;
+            animation: slotSpin 0.1s infinite;
+        }
+        @keyframes slotSpin {
+            0% { transform: translateY(-100px); }
+            100% { transform: translateY(100px); }
+        }
+        
+        /* Результат игры */
+        .game-result { 
+            padding: 30px; 
+            margin: 30px 0; 
+            border-radius: 15px; 
+            text-align: center; 
+            font-size: 24px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        .win { 
+            background: linear-gradient(135deg, rgba(0,255,136,0.3) 0%, rgba(0,230,118,0.3) 100%); 
+            border: 3px solid #00ff88;
+        }
+        .lose { 
+            background: linear-gradient(135deg, rgba(255,65,108,0.3) 0%, rgba(255,75,43,0.3) 100%); 
+            border: 3px solid #ff416c;
+        }
+        
+        /* Модальные окна */
+        .modal { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.9); 
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content { 
+            background: linear-gradient(135deg, #1a1a2e 0%, #0c0c1d 100%); 
+            margin: 50px auto; 
+            padding: 40px; 
+            border-radius: 25px; 
+            max-width: 600px; 
+            position: relative;
+            border: 2px solid rgba(255,215,0,0.3);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+            animation: modalAppear 0.3s ease-out;
+        }
+        @keyframes modalAppear {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .close { 
+            position: absolute; 
+            top: 20px; 
+            right: 25px; 
+            font-size: 35px; 
+            cursor: pointer; 
+            color: #ffd700;
+            transition: transform 0.2s;
+        }
+        .close:hover { transform: rotate(90deg); }
+        
+        /* Админ панель */
+        .admin-section { 
+            background: rgba(255,65,108,0.1); 
+            padding: 25px; 
+            border-radius: 15px; 
+            margin-top: 25px;
+            border: 2px solid rgba(255,65,108,0.3);
+        }
+        .chance-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+        .chance-item {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .chance-value {
+            color: #ffd700;
+            font-weight: bold;
+            font-size: 18px;
+            margin-left: 10px;
+        }
+        
+        /* Прогресс бар */
+        .progress-bar {
+            height: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00e676);
+            border-radius: 10px;
+            transition: width 0.3s;
+        }
+        
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .container { padding: 15px; }
+            .auth-box { padding: 25px; }
+            .header { flex-direction: column; gap: 20px; }
+            .controls { justify-content: center; }
+            .games-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+            .game-area { padding: 20px; }
+            .mine-cell { width: 50px; height: 50px; font-size: 20px; }
+            .slot-reel { width: 70px; height: 70px; font-size: 35px; }
+        }
+        
+        /* Анимации */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .floating { animation: float 3s ease-in-out infinite; }
+        
+        /* Свечение */
+        .glow {
+            text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+        }
+        
+        /* Нормальные X в минах */
+        .multiplier-display {
+            font-size: 28px;
+            color: #ffd700;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            text-shadow: 0 0 15px rgba(255,215,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Секция авторизации -->
+        <div id="authSection">
+            <div class="auth-box floating">
+                <h2 style="text-align: center; margin-bottom: 30px; color: #ffd700; font-size: 32px;" class="glow">⭐ BezdarMoney</h2>
+                <div class="tabs">
+                    <button class="tab active" onclick="showTab('login')">Вход</button>
+                    <button class="tab" onclick="showTab('register')">Регистрация</button>
+                </div>
+                
+                <div id="loginForm" class="auth-form active">
+                    <input type="text" id="loginUser" placeholder="Ваш никнейм">
+                    <input type="password" id="loginPass" placeholder="Пароль">
+                    <button onclick="login()">🎮 Войти в казино</button>
+                    <div id="loginMessage" class="message"></div>
+                </div>
+                
+                <div id="registerForm" class="auth-form">
+                    <input type="text" id="regUser" placeholder="Придумайте никнейм">
+                    <input type="password" id="regPass" placeholder="Придумайте пароль">
+                    <button onclick="register()">⭐ Зарегистрироваться +1 Звезда</button>
+                    <div id="regMessage" class="message"></div>
+                    <p style="margin-top: 15px; text-align: center; opacity: 0.7; font-size: 14px;">
+                        Минимум 3 символа в нике и 4 в пароле
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Основной интерфейс -->
+        <div id="mainSection">
+            <!-- Шапка -->
+            <div class="header">
+                <div>
+                    <div class="logo">
+                        <span class="glow">⭐</span> BezdarMoney
+                    </div>
+                    <div class="balance">
+                        <span id="balance">0</span> ⭐
+                    </div>
+                </div>
+                <div class="controls">
+                    <button onclick="showModal('deposit')" class="btn-green">💳 Пополнить</button>
+                    <button onclick="showModal('withdraw')" class="btn-red">💰 Вывод</button>
+                    <button onclick="showModal('bonus')" class="btn-blue">🎁 Кешбек 5%</button>
+                    <button onclick="showModal('promo')" class="btn-purple">🎫 Промокоды</button>
+                    <button onclick="showModal('admin')" class="btn-red">⚙ Админ</button>
+                    <button onclick="logout()">🚪 Выход</button>
+                </div>
+            </div>
+            
+            <!-- Игры -->
+            <h3 style="margin-bottom: 20px; font-size: 24px; color: #ffd700; text-align: center;">🎮 ВЫБЕРИТЕ ИГРУ</h3>
+            <div class="games-grid">
+                <div class="game-card" onclick="startGame('mines')">
+                    <div class="game-icon">💣</div>
+                    <h4>Минное поле</h4>
+                    <p>Найдите все безопасные клетки</p>
+                </div>
+                <div class="game-card" onclick="startGame('crash')">
+                    <div class="game-icon">✈️</div>
+                    <h4>Краш самолёт</h4>
+                    <p>Заберите деньги до падения</p>
+                </div>
+                <div class="game-card" onclick="startGame('roulette')">
+                    <div class="game-icon">🎡</div>
+                    <h4>Рулетка</h4>
+                    <p>Угадайте число от 0 до 36</p>
+                </div>
+                <div class="game-card" onclick="startGame('dice')">
+                    <div class="game-icon">🎲</div>
+                    <h4>Бросок кости</h4>
+                    <p>Угадайте число на кубике</p>
+                </div>
+                <div class="game-card" onclick="startGame('slot')">
+                    <div class="game-icon">🎰</div>
+                    <h4>Слот-машина</h4>
+                    <p>Соберите 3 одинаковых символа</p>
+                </div>
+            </div>
+            
+            <!-- Область игры -->
+            <div id="gameArea" class="game-area"></div>
+            
+            <!-- Статистика -->
+            <div style="background: rgba(26, 26, 46, 0.8); padding: 25px; border-radius: 15px; margin-top: 30px; border: 2px solid rgba(255,215,0,0.3);">
+                <h4 style="color: #ffd700; margin-bottom: 15px; font-size: 20px;">🎯 ВАША СТАТИСТИКА</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                    <div>
+                        <p>Сумма ставок за неделю:</p>
+                        <div class="progress-bar">
+                            <div id="wagerBar" class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <p><span id="wager">0</span> ⭐</p>
+                    </div>
+                    <div>
+                        <p>Доступный кешбек (5%):</p>
+                        <div class="progress-bar">
+                            <div id="cashbackBar" class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <p><span id="cashbackAmount">0</span> ⭐</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальные окна -->
+    <div id="deposit" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="hideModal()">×</span>
+            <h3 style="color: #ffd700;">💳 ПОПОЛНЕНИЕ БАЛАНСА</h3>
+            <div style="text-align: center; padding: 30px;">
+                <div style="font-size: 80px; margin-bottom: 20px;">⏳</div>
+                <p style="color: #ffd700; font-size: 24px; margin-bottom: 20px;">В РАЗРАБОТКЕ</p>
+                <p>Скоро будут доступны различные способы пополнения</p>
+            </div>
+            <button onclick="hideModal()">Закрыть</button>
+        </div>
+    </div>
+    
+    <div id="withdraw" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="hideModal()">×</span>
+            <h3 style="color: #ffd700;">💰 ВЫВОД СРЕДСТВ</h3>
+            <div style="text-align: center; padding: 30px;">
+                <div style="font-size: 80px; margin-bottom: 20px;">⏳</div>
+                <p style="color: #ffd700; font-size: 24px; margin-bottom: 20px;">В РАЗРАБОТКЕ</p>
+                <p>Минимальная сумма вывода: <span style="color: #ffd700;">100 ⭐</span></p>
+            </div>
+            <button onclick="hideModal()">Закрыть</button>
+        </div>
+    </div>
+    
+    <div id="bonus" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="hideModal()">×</span>
+            <h3 style="color: #ffd700;">🎁 СИСТЕМА КЕШБЕКА</h3>
+            <div style="background: rgba(255,215,0,0.1); padding: 25px; border-radius: 15px; margin: 25px 0; border: 2px solid rgba(255,215,0,0.3);">
+                <p style="font-size: 18px; margin-bottom: 15px;">🎯 Вы получаете 5% от проигранных ставок обратно каждую неделю</p>
+                <p style="font-size: 24px; color: #ffd700; margin-bottom: 20px;">Ваш кешбек: <span id="bonusAmount">0</span> ⭐</p>
+                <div class="progress-bar">
+                    <div id="bonusProgress" class="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+            <button onclick="claimBonus()">Забрать кешбек</button>
+        </div>
+    </div>
+    
+    <div id="promo" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="hideModal()">×</span>
+            <h3 style="color: #ffd700;">🎫 АКТИВАЦИЯ ПРОМОКОДА</h3>
+            <input type="text" id="promoCode" placeholder="ВВЕДИТЕ ПРОМОКОД" style="text-align: center; font-size: 18px;">
+            <button onclick="usePromo()" style="margin-top: 20px; font-size: 18px;">🎁 АКТИВИРОВАТЬ</button>
+            <div id="promoMessage" class="message" style="margin-top: 25px;"></div>
+        </div>
+    </div>
+    
+    <div id="admin" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="hideModal()">×</span>
+            <h3 style="color: #ff416c;">⚙ АДМИН ПАНЕЛЬ</h3>
+            <div style="background: rgba(255,65,108,0.1); padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 2px solid rgba(255,65,108,0.3);">
+                <p style="text-align: center; margin-bottom: 10px;">🔐 Доступ только для администратора</p>
+                <input type="password" id="adminPass" placeholder="Введите пароль для доступа" style="text-align: center;">
+            </div>
+            
+            <div id="adminPanel" style="display: none;">
+                <div class="admin-section">
+                    <h4 style="color: #ff416c; margin-bottom: 20px;">👤 Управление пользователями</h4>
+                    <input type="text" id="adminUser" placeholder="Ник пользователя">
+                    <input type="number" id="adminAmount" placeholder="Количество звёзд" min="1">
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button onclick="adminAdd()" class="btn-green" style="flex: 1;">Выдать звёзды</button>
+                        <button onclick="adminRemove()" class="btn-red" style="flex: 1;">Забрать звёзды</button>
+                    </div>
+                </div>
+                
+                <div class="admin-section">
+                    <h4 style="color: #ff416c; margin-bottom: 20px;">🎫 Создание промокода</h4>
+                    <input type="text" id="newPromo" placeholder="Код промокода (например: WELCOME100)">
+                    <input type="number" id="newPromoAmount" placeholder="Количество звёзд" min="1">
+                    <button onclick="createPromo()" style="margin-top: 15px;">Создать промокод</button>
+                </div>
+                
+                <div class="admin-section">
+                    <h4 style="color: #ff416c; margin-bottom: 20px;">🎯 НАСТРОЙКА ШАНСОВ ИГР</h4>
+                    <div class="chance-controls">
+                        <!-- Мины -->
+                        <div class="chance-item">
+                            <label>💣 МИНЫ - Шанс выигрыша</label>
+                            <input type="range" id="minesWinChance" min="1" max="50" step="1" value="10" 
+                                   oninput="updateMinesWinChance(this.value)">
+                            <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                                <span>1%</span>
+                                <span class="chance-value" id="minesWinValue">10%</span>
+                                <span>50%</span>
+                            </div>
+                            <label style="margin-top: 10px; display: block;">Макс. множитель</label>
+                            <input type="range" id="minesMaxMulti" min="1" max="50" step="1" value="25"
+                                   oninput="updateMinesMaxMulti(this.value)">
+                            <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                                <span>1x</span>
+                                <span class="chance-value" id="minesMaxValue">25x</span>
+                                <span>50x</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Краш -->
+                        <div class="chance-item">
+                            <label>✈️ КРАШ - Шанс краха до 2x</label>
+                            <input type="range" id="crashLowChance" min="1" max="50" step="1" value="20"
+                                   oninput="updateCrashLowChance(this.value)">
+                            <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                                <span>1%</span>
+                                <span class="chance-value" id="crashLowValue">20%</span>
+                                <span>50%</span>
+                            </div>
+                            <label style="margin-top: 10px; display: block;">Мин. кэшаут</label>
+                            <input type="range" id="crashMinCashout" min="1" max="5" step="0.1" value="1.4"
+                                   oninput="updateCrashMinCashout(this.value)">
+                            <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                                <span>1x</span>
+                                <span class="chance-value" id="crashMinValue">1.4x</span>
+                                <span>5x</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Рулетка -->
+                        <div class="chance-item">
+                            <label>🎡 РУЛЕТКА - Шанс выигрыша</label>
+                            <input type="range" id="rouletteWinChance" min="1" max="10" step="0.1" value="2.7"
+                                   oninput="updateRouletteWinChance(this.value)">
+                            <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                                <span>1%</span>
+                                <span class="chance-value" id="rouletteWinValue">2.7%</span>
+                                <span>10%</span>
+                            </div>
+                            <label style="margin-top: 10px; display: block;">Множитель за победу</label>
+                            <input type="range" id="rouletteMulti" min="10" max="50" step="1" value="36"
+                                   oninput="updateRouletteMulti(this.value)">
+                            <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                                <span>10x</span>
+                                <span class="chance-value" id="rouletteMultiValue">36x</span>
+                                <span>50x</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Слоты -->
+                        <div class="chance-item">
+                            <label>🎰 СЛОТЫ - Шанс джекпота</label>
+                            <input type="range" id="slotsJackpotChance" min="1" max="20" step="0.1" value="4.5"
+                                   oninput="updateSlotsJackpotChance(this.value)">
+                            <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                                <span>1%</span>
+                                <span class="chance-value" id="slotsJackpotValue">4.5%</span>
+                                <span>20%</span>
+                            </div>
+                            <label style="margin-top: 10px; display: block;">Множитель джекпота</label>
+                            <input type="range" id="slotsMulti" min="5" max="50" step="1" value="10"
+                                   oninput="updateSlotsMulti(this.value)">
+                            <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                                <span>5x</span>
+                                <span class="chance-value" id="slotsMultiValue">10x</span>
+                                <span>50x</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="saveChances()" style="margin-top: 20px; font-size: 16px; padding: 15px;">💾 СОХРАНИТЬ НАСТРОЙКИ ШАНСОВ</button>
+                </div>
+                
+                <div class="admin-section">
+                    <h4 style="color: #ff416c; margin-bottom: 20px;">🗄 УПРАВЛЕНИЕ БАЗОЙ ДАННЫХ</h4>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button onclick="exportDB()" class="btn-blue" style="flex: 1;">📤 Экспорт БД</button>
+                        <label style="flex: 1;">
+                            <input type="file" id="importDB" accept=".json" style="display: none;" onchange="importDB(event)">
+                            <div class="btn-purple" style="text-align: center; padding: 12px; cursor: pointer;">📥 Импорт БД</div>
+                        </label>
+                    </div>
+                    <p style="margin-top: 10px; font-size: 12px; opacity: 0.7;">
+                        Текущий размер БД: <span id="dbSize">0</span> байт
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ====================
+        // БАЗА ДАННЫХ
+        // ====================
+        const DB_NAME = 'bezdarmoney_db';
+        const ADMIN_PASS = 'Bezdarnik747';
+        let currentUser = null;
+        let gameSettings = {
+            mines: { 
+                winChance: 10,
+                maxMultiplier: 25
+            },
+            crash: { 
+                lowCrashChance: 20,
+                minCashout: 1.4
+            },
+            roulette: { 
+                winChance: 2.7,
+                winMultiplier: 36
+            },
+            slots: { 
+                jackpotChance: 4.5,
+                jackpotMultiplier: 10
+            }
+        };
+        
+        // Инициализация базы данных
+        function initDB() {
+            if (!localStorage.getItem(DB_NAME)) {
+                const db = {
+                    users: {},
+                    promocodes: {},
+                    history: [],
+                    settings: gameSettings,
+                    stats: {
+                        totalBets: 0,
+                        totalWins: 0,
+                        totalPayout: 0
+                    }
+                };
+                localStorage.setItem(DB_NAME, JSON.stringify(db));
+            } else {
+                const db = JSON.parse(localStorage.getItem(DB_NAME));
+                if (db.settings) {
+                    gameSettings = db.settings;
+                }
+            }
+            updateDBInfo();
+        }
+        
+        function getDB() {
+            return JSON.parse(localStorage.getItem(DB_NAME));
+        }
+        
+        function saveDB(db) {
+            localStorage.setItem(DB_NAME, JSON.stringify(db));
+            updateDBInfo();
+        }
+        
+        function updateDBInfo() {
+            const dbSize = JSON.stringify(getDB()).length;
+            const dbSizeElement = document.getElementById('dbSize');
+            if (dbSizeElement) {
+                dbSizeElement.textContent = dbSize;
+            }
+        }
+        
+        function backupDB() {
+            const db = getDB();
+            localStorage.setItem(DB_NAME + '_backup_' + Date.now(), JSON.stringify(db));
+        }
+        
+        // ====================
+        // АВТОРИЗАЦИЯ
+        // ====================
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
+            
+            document.getElementById(tabName + 'Form').classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function register() {
+            const username = document.getElementById('regUser').value.trim();
+            const password = document.getElementById('regPass').value.trim();
+            const message = document.getElementById('regMessage');
+            
+            if (username.length < 3) {
+                showMessage(message, 'Ник должен быть минимум 3 символа', 'error');
+                return;
+            }
+            if (password.length < 4) {
+                showMessage(message, 'Пароль должен быть минимум 4 символа', 'error');
+                return;
+            }
+            
+            const db = getDB();
+            
+            if (db.users[username]) {
+                showMessage(message, 'Этот ник уже занят', 'error');
+                return;
+            }
+            
+            db.users[username] = {
+                password: password,
+                balance: 1,
+                wager: 0,
+                created: new Date().toISOString(),
+                stats: { 
+                    wins: 0, 
+                    losses: 0,
+                    totalBet: 0,
+                    totalWin: 0
+                },
+                lastLogin: new Date().toISOString()
+            };
+            
+            saveDB(db);
+            showMessage(message, '✅ Регистрация успешна! Вы получили 1 ⭐', 'success');
+            
+            setTimeout(() => {
+                loginUser(username, password);
+            }, 1500);
+        }
+        
+        function login() {
+            const username = document.getElementById('loginUser').value.trim();
+            const password = document.getElementById('loginPass').value.trim();
+            loginUser(username, password);
+        }
+        
+        function loginUser(username, password) {
+            const db = getDB();
+            const message = document.getElementById('loginMessage');
+            
+            if (!db.users[username]) {
+                showMessage(message, 'Пользователь не найден', 'error');
+                return;
+            }
+            
+            if (db.users[username].password !== password) {
+                showMessage(message, 'Неверный пароль', 'error');
+                return;
+            }
+            
+            db.users[username].lastLogin = new Date().toISOString();
+            saveDB(db);
+            
+            currentUser = username;
+            localStorage.setItem('current_user', username);
+            showMainInterface();
+            updateUI();
+        }
+        
+        function showMessage(element, text, type) {
+            element.textContent = text;
+            element.className = 'message ' + type;
+            element.style.display = 'block';
+        }
+        
+        // ====================
+        // ОСНОВНОЙ ИНТЕРФЕЙС
+        // ====================
+        function showMainInterface() {
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('mainSection').style.display = 'block';
+        }
+        
+        function updateUI() {
+            if (!currentUser) return;
+            
+            const db = getDB();
+            const user = db.users[currentUser];
+            
+            if (!user) {
+                logout();
+                return;
+            }
+            
+            document.getElementById('balance').textContent = user.balance.toFixed(2);
+            document.getElementById('wager').textContent = user.wager || 0;
+            
+            const cashback = Math.floor((user.wager || 0) * 0.05);
+            document.getElementById('cashbackAmount').textContent = cashback;
+            document.getElementById('bonusAmount').textContent = cashback;
+            
+            const wagerPercent = Math.min((user.wager || 0) / 1000 * 100, 100);
+            document.getElementById('wagerBar').style.width = wagerPercent + '%';
+            document.getElementById('cashbackBar').style.width = Math.min(cashback / 50 * 100, 100) + '%';
+            document.getElementById('bonusProgress').style.width = Math.min(cashback / 50 * 100, 100) + '%';
+        }
+        
+        function logout() {
+            if (confirm('Вы уверены, что хотите выйти?')) {
+                currentUser = null;
+                localStorage.removeItem('current_user');
+                document.getElementById('mainSection').style.display = 'none';
+                document.getElementById('authSection').style.display = 'block';
+                document.getElementById('gameArea').style.display = 'none';
+                
+                document.getElementById('loginUser').value = '';
+                document.getElementById('loginPass').value = '';
+                document.getElementById('regUser').value = '';
+                document.getElementById('regPass').value = '';
+            }
+        }
+        
+        // ====================
+        // ИГРЫ
+        // ====================
+        function startGame(gameType) {
+            const db = getDB();
+            const user = db.users[currentUser];
+            
+            if (!user) {
+                logout();
+                return;
+            }
+            
+            if (user.balance <= 0) {
+                alert('💰 У вас нет звёзд для игры!');
+                return;
+            }
+            
+            const gameArea = document.getElementById('gameArea');
+            gameArea.style.display = 'block';
+            gameArea.innerHTML = '';
+            
+            let html = `<h3 style="color: #ffd700; text-align: center; margin-bottom: 30px;">${getGameName(gameType)}</h3>`;
+            
+            switch(gameType) {
+                case 'mines':
+                    html += `
+                        <div style="max-width: 500px; margin: 0 auto;">
+                            <p style="text-align: center; margin-bottom: 20px;">Ставка (макс: ${user.balance.toFixed(2)} ⭐):</p>
+                            <input type="number" id="bet" min="1" max="${user.balance}" value="1" style="text-align: center;">
+                            <p style="text-align: center; margin: 20px 0;">Количество мин (3-24):</p>
+                            <input type="range" id="mines" min="3" max="24" value="5" style="width: 100%;"
+                                oninput="updateMinesPreview(this.value)">
+                            <p style="text-align: center; margin: 10px 0;">
+                                Мин: <span id="minesCount" style="color: #ffd700;">5</span> | 
+                                Макс множитель: <span id="minesMultiPreview" style="color: #00ff88;">${calculateMinesMultiplier(5).toFixed(1)}x</span>
+                            </p>
+                            <button onclick="initMinesGame()" style="margin-top: 20px;">💣 Начать игру</button>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'crash':
+                    html += `
+                        <div class="crash-game">
+                            <p style="text-align: center; margin-bottom: 20px;">Ставка (макс: ${user.balance.toFixed(2)} ⭐):</p>
+                            <input type="number" id="bet" min="1" max="${user.balance}" value="1" style="text-align: center;">
+                            <p style="text-align: center; margin: 20px 0;">Множитель кэшаута (${gameSettings.crash.minCashout.toFixed(1)}-10):</p>
+                            <input type="number" id="multiplier" min="${gameSettings.crash.minCashout.toFixed(1)}" max="10" step="0.1" 
+                                   value="${Math.max(gameSettings.crash.minCashout, 2).toFixed(1)}" style="text-align: center;">
+                            <p style="text-align: center; color: #ff416c; margin: 10px 0;">
+                                ⚠️ Минимальный кэшаут: ${gameSettings.crash.minCashout.toFixed(1)}x
+                            </p>
+                            <button onclick="startCrashGame()" style="margin-top: 20px; font-size: 18px;">✈️ Взлетаем!</button>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'roulette':
+                    html += `
+                        <div style="text-align: center;">
+                            <p style="margin-bottom: 20px;">Ставка (макс: ${user.balance.toFixed(2)} ⭐):</p>
+                            <input type="number" id="bet" min="1" max="${user.balance}" value="1" style="text-align: center;">
+                            <p style="margin: 20px 0;">Число (0-36):</p>
+                            <input type="number" id="number" min="0" max="36" value="0" style="text-align: center;">
+                            <p style="margin: 10px 0; color: #ffd700;">
+                                Шанс выигрыша: ${gameSettings.roulette.winChance}% | Множитель: ${gameSettings.roulette.winMultiplier}x
+                            </p>
+                            <button onclick="playRoulette()" style="margin-top: 20px; font-size: 18px;">🎡 Крутить рулетку!</button>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'slot':
+                    html += `
+                        <div style="text-align: center;">
+                            <p style="margin-bottom: 20px;">Ставка (макс: ${user.balance.toFixed(2)} ⭐):</p>
+                            <input type="number" id="bet" min="1" max="${user.balance}" value="1" style="text-align: center;">
+                            <p style="margin: 10px 0; color: #ffd700;">
+                                Шанс джекпота: ${gameSettings.slots.jackpotChance}% | Множитель: ${gameSettings.slots.jackpotMultiplier}x
+                            </p>
+                            <button onclick="startSlotGame()" style="margin-top: 20px; font-size: 20px; padding: 15px 30px;">🎰 Крутить!</button>
+                            <div id="slotMachine" style="margin: 40px 0;"></div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'dice':
+                    html += `
+                        <div style="text-align: center;">
+                            <p style="margin-bottom: 20px;">Ставка (макс: ${user.balance.toFixed(2)} ⭐):</p>
+                            <input type="number" id="bet" min="1" max="${user.balance}" value="1" style="text-align: center;">
+                            <p style="margin: 20px 0;">Число (1-6):</p>
+                            <input type="number" id="number" min="1" max="6" value="3" style="text-align: center;">
+                            <button onclick="playDice()" style="margin-top: 20px; font-size: 18px;">🎲 Бросить кость!</button>
+                        </div>
+                    `;
+                    break;
+            }
+            
+            html += `<button onclick="gameArea.style.display='none'" style="margin-top: 20px; background: rgba(255,255,255,0.1);">Отмена</button>`;
+            gameArea.innerHTML = html;
+            
+            if (gameType === 'mines') {
+                updateMinesPreview(5);
+            }
+        }
+        
+        function getGameName(type) {
+            const names = {
+                'mines': '💣 МИННОЕ ПОЛЕ',
+                'crash': '✈️ КРАШ САМОЛЁТ',
+                'roulette': '🎡 РУЛЕТКА',
+                'dice': '🎲 БРОСОК КОСТИ',
+                'slot': '🎰 СЛОТ-МАШИНА'
+            };
+            return names[type] || 'ИГРА';
+        }
+        
+        // ====================
+        // ИГРА МИНЫ
+        // ====================
+        let minesGame = {
+            bet: 0,
+            mines: 0,
+            revealed: 0,
+            safeCells: 0,
+            cells: [],
+            currentMultiplier: 1
+        };
+        
+        function calculateMinesMultiplier(minesCount) {
+            const baseMulti = gameSettings.mines.maxMultiplier;
+            const minesFactor = (25 / (25 - minesCount));
+            return Math.min(baseMulti * minesFactor, 50);
+        }
+        
+        function updateMinesPreview(minesCount) {
+            document.getElementById('minesCount').textContent = minesCount;
+            const multi = calculateMinesMultiplier(parseInt(minesCount));
+            document.getElementById('minesMultiPreview').textContent = multi.toFixed(1) + 'x';
+        }
+        
+        function initMinesGame() {
+            const bet = parseFloat(document.getElementById('bet').value);
+            const mines = parseInt(document.getElementById('mines').value);
+            
+            const db = getDB();
+            const user = db.users[currentUser];
+            
+            if (bet > user.balance) {
+                alert('Недостаточно звёзд!');
+                return;
+            }
+            
+            minesGame = {
+                bet: bet,
+                mines: mines,
+                revealed: 0,
+                safeCells: 25 - mines,
+                cells: [],
+                currentMultiplier: 1
+            };
+            
+            let cells = Array(25).fill('safe');
+            let minesPlaced = 0;
+            
+            for (let i = 0; i < 25; i++) {
+                if (minesPlaced < mines) {
+                    const mineProbability = mines / 25 * (1 - gameSettings.mines.winChance / 100);
+                    if (Math.random() < mineProbability) {
+                        cells[i] = 'mine';
+                        minesPlaced++;
+                    }
+                }
+            }
+            
+            while (minesPlaced < mines) {
+                const index = Math.floor(Math.random() * 25);
+                if (cells[index] === 'safe') {
+                    cells[index] = 'mine';
+                    minesPlaced++;
+                }
+            }
+            
+            minesGame.cells = cells;
+            
+            const gameArea = document.getElementById('gameArea');
+            const maxMulti = calculateMinesMultiplier(mines);
+            
+            let html = `<h3 style="color: #ffd700; text-align: center;">💣 МИННОЕ ПОЛЕ</h3>`;
+            html += `<p style="text-align: center; margin: 20px 0;">Ставка: ${bet.toFixed(2)} ⭐ | Мин: ${mines}</p>`;
+            html += `<div class="multiplier-display" id="currentMultiplier">Текущий множитель: 1.0x</div>`;
+            html += `<div class="mines-field" id="minesField"></div>`;
+            html += `<p style="text-align: center; margin-top: 20px;" id="minesStatus">Открыто 0/${25-mines} безопасных клеток</p>`;
+            html += `<button onclick="cashoutMines()" style="margin-top: 20px;">💰 Забрать до ${maxMulti.toFixed(1)}x</button>`;
+            html += `<button onclick="document.getElementById('gameArea').style.display='none'" style="margin-top: 10px; background: rgba(255,255,255,0.1);">Выйти</button>`;
+            
+            gameArea.innerHTML = html;
+            
+            const field = document.getElementById('minesField');
+            for (let i = 0; i < 25; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'mine-cell';
+                cell.dataset.index = i;
+                cell.textContent = '?';
+                cell.onclick = () => revealMineCell(i);
+                field.appendChild(cell);
+            }
+            
+            updateMinesMultiplier();
+        }
+        
+        function updateMinesMultiplier() {
+            if (minesGame.revealed === 0) {
+                minesGame.currentMultiplier = 1;
+            } else {
+                const progress = minesGame.revealed / minesGame.safeCells;
+                const maxMulti = calculateMinesMultiplier(minesGame.mines);
+                minesGame.currentMultiplier = 1 + progress * (maxMulti - 1);
+            }
+            
+            const multiElement = document.getElementById('currentMultiplier');
+            if (multiElement) {
+                multiElement.textContent = `Текущий множитель: ${minesGame.currentMultiplier.toFixed(1)}x`;
+            }
+        }
+        
+        function revealMineCell(index) {
+            if (minesGame.revealed >= minesGame.safeCells) return;
+            
+            const cell = document.querySelector(`.mine-cell[data-index="${index}"]`);
+            if (cell.classList.contains('revealed')) return;
+            
+            cell.classList.add('revealed');
+            
+            if (minesGame.cells[index] === 'mine') {
+                cell.textContent = '💣';
+                cell.classList.add('mine');
+                endMinesGame(false);
+            } else {
+                cell.textContent = '✓';
+                cell.classList.add('safe');
+                minesGame.revealed++;
+                
+                document.getElementById('minesStatus').textContent = 
+                    `Открыто ${minesGame.revealed}/${minesGame.safeCells} безопасных клеток`;
+                
+                updateMinesMultiplier();
+                
+                if (minesGame.revealed === minesGame.safeCells) {
+                    endMinesGame(true);
+                }
+            }
+        }
+        
+        function cashoutMines() {
+            if (minesGame.revealed === 0) return;
+            endMinesGame(true, true);
+        }
+        
+        function endMinesGame(win, cashout = false) {
+            const winAmount = win ? minesGame.bet * minesGame.currentMultiplier : 0;
+            
+            document.querySelectorAll('.mine-cell').forEach((cell, i) => {
+                if (!cell.classList.contains('revealed')) {
+                    cell.classList.add('revealed');
+                    if (minesGame.cells[i] === 'mine') {
+                        cell.textContent = '💣';
+                        cell.classList.add('mine');
+                    } else {
+                        cell.textContent = '✓';
+                        cell.classList.add('safe');
+                    }
+                }
+            });
+            
+            const resultText = win ? 
+                (cashout ? `💰 Вы забрали выигрыш досрочно!` : `🎉 Вы открыли все безопасные клетки!`) : 
+                `💥 Вы наступили на мину!`;
+            
+            finishGame('mines', minesGame.bet, winAmount, resultText, winAmount > 0);
+        }
+        
+        // ====================
+        // ИГРА КРАШ
+        // ====================
+        let crashGame = null;
+        
+        function startCrashGame() {
+            const bet = parseFloat(document.getElementById('bet').value);
+            const multiplier = parseFloat(document.getElementById('multiplier').value);
+            const minCashout = gameSettings.crash.minCashout;
+            
+            if (multiplier < minCashout) {
+                alert(`Минимальный кэшаут: ${minCashout.toFixed(1)}x`);
+                return;
+            }
+            
+            const db = getDB();
+            const user = db.users[currentUser];
+            
+            if (bet > user.balance) {
+                alert('Недостаточно звёзд!');
+                return;
+            }
+            
+            let crashPoint;
+            const lowCrashChance = gameSettings.crash.lowCrashChance / 100;
+            
+            if (Math.random() < lowCrashChance) {
+                crashPoint = 1 + Math.random();
+            } else {
+                crashPoint = 2 + Math.random() * 8;
+            }
+            
+            crashPoint = parseFloat(crashPoint.toFixed(2));
+            
+            const gameArea = document.getElementById('gameArea');
+            let html = `<h3 style="color: #ffd700; text-align: center;">✈️ КРАШ САМОЛЁТ</h3>`;
+            html += `<p style="text-align: center; margin: 20px 0;">Ставка: ${bet.toFixed(2)} ⭐ | Кэшаут: ${multiplier.toFixed(1)}x</p>`;
+            html += `<div class="crash-graph">
+                <div class="crash-line" id="crashLine" style="width: 0%"></div>
+                <div class="crash-plane" id="crashPlane">✈️</div>
+                <div class="crash-multiplier" id="crashMultiplier">1.00x</div>
+                <div class="min-cashout">Мин. кэшаут: ${minCashout.toFixed(1)}x</div>
+            </div>`;
+            html += `<button onclick="cashoutCrash()" id="cashoutBtn" style="margin-top: 20px;">💰 Кэшаут (1.00x)</button>`;
+            html += `<button onclick="endCrashGame()" style="margin-top: 10px; background: rgba(255,65,108,0.3);">Завершить</button>`;
+            
+            gameArea.innerHTML = html;
+            
+            crashGame = {
+                bet: bet,
+                targetMultiplier: multiplier,
+                crashPoint: crashPoint,
+                currentMultiplier: 1.0,
+                crashed: false,
+                cashedOut: false,
+                interval: null,
+                speed: 0.03
+            };
+            
+            crashGame.interval = setInterval(updateCrashGame, 100);
+        }
+        
+        function updateCrashGame() {
+            if (!crashGame || crashGame.crashed) return;
+            
+            crashGame.currentMultiplier += crashGame.speed;
+            
+            const progressPercent = ((crashGame.currentMultiplier - 1) / (crashGame.crashPoint - 1) * 100);
+            document.getElementById('crashLine').style.width = Math.min(progressPercent, 100) + '%';
+            
+            const planePosition = 100 - Math.min(progressPercent, 100);
+            document.getElementById('crashPlane').style.right = planePosition + '%';
+            
+            document.getElementById('crashMultiplier').textContent = crashGame.currentMultiplier.toFixed(2) + 'x';
+            document.getElementById('cashoutBtn').textContent = 
+                `💰 Кэшаут (${crashGame.currentMultiplier.toFixed(2)}x)`;
+            
+            if (crashGame.currentMultiplier >= crashGame.crashPoint) {
+                endCrashGame(false);
+            }
+        }
+        
+        function cashoutCrash() {
+            if (!crashGame || crashGame.crashed || crashGame.cashedOut) return;
+            
+            if (crashGame.currentMultiplier < gameSettings.crash.minCashout) {
+                alert(`Кэшаут возможен только от ${gameSettings.crash.minCashout.toFixed(1)}x!`);
+                return;
+            }
+            
+            crashGame.cashedOut = true;
+            clearInterval(crashGame.interval);
+            
+            const win = crashGame.currentMultiplier <= crashGame.targetMultiplier;
+            const winAmount = win ? crashGame.bet * crashGame.currentMultiplier : 0;
+            const resultText = win ? 
+                `✈️ Вы успели на кэшауте ${crashGame.currentMultiplier.toFixed(2)}x!` : 
+                `💥 Самолёт разбился на ${crashGame.crashPoint.toFixed(2)}x (ваш кэшаут: ${crashGame.targetMultiplier}x)`;
+            
+            finishGame('crash', crashGame.bet, winAmount, resultText, win);
+        }
+        
+        function endCrashGame(manual = true) {
+            if (!crashGame) return;
+            
+            clearInterval(crashGame.interval);
+            crashGame.crashed = true;
+            
+            if (!crashGame.cashedOut && !manual) {
+                const winAmount = 0;
+                const resultText = `💥 Самолёт разбился на ${crashGame.crashPoint.toFixed(2)}x`;
+                finishGame('crash', crashGame.bet, winAmount, resultText, false);
+            }
+        }
+        
+        // ====================
+        // ДРУГИЕ ИГРЫ
+        // ====================
+        function playRoulette() {
+            const bet = parseFloat(document.getElementById('bet').value);
+            const number = parseInt(document.getElementById('number').value);
+            
+            const db = getDB();
+            const user = db.users[currentUser];
+            
+            if (bet > user.balance) {
+                alert('Недостаточно звёзд!');
+                return;
+            }
+            
+            const winChance = gameSettings.roulette.winChance / 100;
+            const win = Math.random() < winChance;
+            const roll = win ? number : Math.floor(Math.random() * 37);
+            const winAmount = win ? bet * gameSettings.roulette.winMultiplier : 0;
+            const resultText = win ? 
+                `🎉 Выпало ${roll}! ДЖЕКПОТ!` : 
+                `Выпало ${roll}. Попробуйте ещё раз!`;
+            
+            finishGame('roulette', bet, winAmount, resultText, win);
+        }
+        
+        function playDice() {
+            const bet = parseFloat(document.getElementById('bet').value);
+            const number = parseInt(document.getElementById('number').value);
+            
+            const db = getDB();
+            const user = db.users[currentUser];
+            
+            if (bet > user.balance) {
+                alert('Недостаточно звёзд!');
+                return;
+            }
+            
+            const roll = Math.floor(Math.random() * 6) + 1;
+            const win = roll === number;
+            const winAmount = win ? bet * 6 : 0;
+            const resultText = win ? 
+                `🎲 Выпало ${roll}! Поздравляем!` : 
+                `Выпало ${roll}. Не повезло!`;
+            
+            finishGame('dice', bet, winAmount, resultText, win);
+        }
+        
+        async function startSlotGame() {
+            const bet = parseFloat(document.getElementById('bet').value);
+            
+            const db = getDB();
+            const user = db.users[currentUser];
+            
+            if (bet > user.balance) {
+                alert('Недостаточно звёзд!');
+                return;
+            }
+            
+            const symbols = ['🍒', '🍋', '🍊', '🍉', '⭐', '7️⃣'];
+            const slotMachine = document.getElementById('slotMachine');
+            
+            slotMachine.innerHTML = `
+                <div class="slot-machine">
+                    <div class="slot-reel" id="reel1"><span>🎰</span></div>
+                    <div class="slot-reel" id="reel2"><span>🎰</span></div>
+                    <div class="slot-reel" id="reel3"><span>🎰</span></div>
+                </div>
+            `;
+            
+            for (let i = 0; i < 10; i++) {
+                await sleep(100);
+                document.getElementById('reel1').innerHTML = `<span>${symbols[Math.floor(Math.random() * symbols.length)]}</span>`;
+                document.getElementById('reel2').innerHTML = `<span>${symbols[Math.floor(Math.random() * symbols.length)]}</span>`;
+                document.getElementById('reel3').innerHTML = `<span>${symbols[Math.floor(Math.random() * symbols.length)]}</span>`;
+            }
+            
+            const jackpotChance = gameSettings.slots.jackpotChance / 100;
+            const isJackpot = Math.random() < jackpotChance;
+            
+            let result;
+            if (isJackpot) {
+                const jackpotSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+                result = [jackpotSymbol, jackpotSymbol, jackpotSymbol];
+            } else {
+                result = [
+                    symbols[Math.floor(Math.random() * symbols.length)],
+                    symbols[Math.floor(Math.random() * symbols.length)],
+                    symbols[Math.floor(Math.random() * symbols.length)]
+                ];
+            }
+            
+            slotMachine.innerHTML = `
+                <div class="slot-machine">
+                    <div class="slot-reel">${result[0]}</div>
+                    <div class="slot-reel">${result[1]}</div>
+                    <div class="slot-reel">${result[2]}</div>
+                </div>
+            `;
+            
+            const win = result[0] === result[1] && result[1] === result[2];
+            const winAmount = win ? bet * gameSettings.slots.jackpotMultiplier : 0;
+            const resultText = win ? 
+                `🎰 ДЖЕКПОТ! ${result[0]} ${result[1]} ${result[2]}` : 
+                `${result[0]} ${result[1]} ${result[2]}`;
+            
+            finishGame('slot', bet, winAmount, resultText, win);
+        }
+        
+        // ====================
+        // ОБЩАЯ ЛОГИКА ИГР
+        // ====================
+        function finishGame(gameType, bet, winAmount, resultText, win) {
+            backupDB();
+            
+            const db = getDB();
+            const user = db.users[currentUser];
+            
+            user.balance -= bet;
+            user.balance += winAmount;
+            user.wager = (user.wager || 0) + bet;
+            user.stats.totalBet = (user.stats.totalBet || 0) + bet;
+            user.stats.totalWin = (user.stats.totalWin || 0) + winAmount;
+            
+            if (win) {
+                user.stats.wins = (user.stats.wins || 0) + 1;
+            } else {
+                user.stats.losses = (user.stats.losses || 0) + 1;
+            }
+            
+            db.stats.totalBets = (db.stats.totalBets || 0) + bet;
+            db.stats.totalWins = (db.stats.totalWins || 0) + (win ? 1 : 0);
+            db.stats.totalPayout = (db.stats.totalPayout || 0) + winAmount;
+            
+            db.history.push({
+                user: currentUser,
+                game: gameType,
+                bet: bet,
+                win: winAmount,
+                result: resultText,
+                time: new Date().toISOString(),
+                balanceAfter: user.balance
+            });
+            
+            saveDB(db);
+            updateUI();
+            
+            const gameArea = document.getElementById('gameArea');
+            gameArea.innerHTML = `
+                <h3 style="color: #ffd700; text-align: center;">${getGameName(gameType)}</h3>
+                <div class="game-result ${win ? 'win' : 'lose'}">
+                    ${resultText}<br>
+                    <div style="font-size: 32px; margin-top: 10px;">${win ? '🎉 ПОБЕДА!' : '💥 ПРОИГРЫШ'}</div>
+                </div>
+                <div style="text-align: center; font-size: 20px; margin: 20px 0;">
+                    <p>Ставка: <span style="color: #ffd700;">${bet.toFixed(2)} ⭐</span></p>
+                    <p>Выигрыш: <span style="color: #00ff88;">${winAmount.toFixed(2)} ⭐</span></p>
+                    <p>Новый баланс: <span style="color: #ffd700; font-size: 24px;">${user.balance.toFixed(2)} ⭐</span></p>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button onclick="startGame('${gameType}')">Играть снова</button>
+                    <button onclick="gameArea.style.display='none'; updateUI();">Закрыть</button>
+                </div>
+            `;
+        }
+        
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        // ====================
+        // МОДАЛЬНЫЕ ОКНА
+        // ====================
+        function showModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+        
+        function hideModal() {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.style.display = 'none';
+            });
+        }
+        
+        // Кешбек
+        function claimBonus() {
+            const db = getDB();
+            const user = db.users[currentUser];
+            
+            const cashback = Math.floor((user.wager || 0) * 0.05);
+            if (cashback <= 0) {
+                alert('Кешбек пока не доступен');
+                return;
+            }
+            
+            user.balance += cashback;
+            user.wager = 0;
+            
+            saveDB(db);
+            updateUI();
+            alert(`🎉 Кешбек ${cashback} ⭐ начислен!`);
+            hideModal();
+        }
+        
+        // Промокоды
+        function usePromo() {
+            const code = document.getElementById('promoCode').value.trim().toUpperCase();
+            const message = document.getElementById('promoMessage');
+            
+            if (!code) {
+                showMessage(message, 'Введите промокод', 'error');
+                return;
+            }
+            
+            const db = getDB();
+            
+            if (!db.promocodes || !db.promocodes[code]) {
+                showMessage(message, 'Неверный промокод', 'error');
+                return;
+            }
+            
+            const promo = db.promocodes[code];
+            
+            if (promo.used && promo.used.includes(currentUser)) {
+                showMessage(message, 'Промокод уже использован', 'error');
+                return;
+            }
+            
+            db.users[currentUser].balance += promo.amount;
+            
+            if (!promo.used) promo.used = [];
+            promo.used.push(currentUser);
+            db.promocodes[code] = promo;
+            
+            saveDB(db);
+            updateUI();
+            showMessage(message, `🎉 Промокод активирован! +${promo.amount} ⭐`, 'success');
+            document.getElementById('promoCode').value = '';
+        }
+        
+        // ====================
+        // АДМИН ПАНЕЛЬ
+        // ====================
+        document.getElementById('adminPass')?.addEventListener('input', function() {
+            const panel = document.getElementById('adminPanel');
+            panel.style.display = this.value === ADMIN_PASS ? 'block' : 'none';
+            if (this.value === ADMIN_PASS) {
+                updateChanceSliders();
+            }
+        });
+        
+        function updateChanceSliders() {
+            // Мины
+            document.getElementById('minesWinChance').value = gameSettings.mines.winChance;
+            document.getElementById('minesWinValue').textContent = gameSettings.mines.winChance + '%';
+            document.getElementById('minesMaxMulti').value = gameSettings.mines.maxMultiplier;
+            document.getElementById('minesMaxValue').textContent = gameSettings.mines.maxMultiplier + 'x';
+            
+            // Краш
+            document.getElementById('crashLowChance').value = gameSettings.crash.lowCrashChance;
+            document.getElementById('crashLowValue').textContent = gameSettings.crash.lowCrashChance + '%';
+            document.getElementById('crashMinCashout').value = gameSettings.crash.minCashout;
+            document.getElementById('crashMinValue').textContent = gameSettings.crash.minCashout.toFixed(1) + 'x';
+            
+            // Рулетка
+            document.getElementById('rouletteWinChance').value = gameSettings.roulette.winChance;
+            document.getElementById('rouletteWinValue').textContent = gameSettings.roulette.winChance + '%';
+            document.getElementById('rouletteMulti').value = gameSettings.roulette.winMultiplier;
+            document.getElementById('rouletteMultiValue').textContent = gameSettings.roulette.winMultiplier + 'x';
+            
+            // Слоты
+            document.getElementById('slotsJackpotChance').value = gameSettings.slots.jackpotChance;
+            document.getElementById('slotsJackpotValue').textContent = gameSettings.slots.jackpotChance + '%';
+            document.getElementById('slotsMulti').value = gameSettings.slots.jackpotMultiplier;
+            document.getElementById('slotsMultiValue').textContent = gameSettings.slots.jackpotMultiplier + 'x';
+        }
+        
+        // Функции обновления значений для слайдеров
+        function updateMinesWinChance(value) {
+            document.getElementById('minesWinValue').textContent = value + '%';
+        }
+        
+        function updateMinesMaxMulti(value) {
+            document.getElementById('minesMaxValue').textContent = value + 'x';
+        }
+        
+        function updateCrashLowChance(value) {
+            document.getElementById('crashLowValue').textContent = value + '%';
+        }
+        
+        function updateCrashMinCashout(value) {
+            document.getElementById('crashMinValue').textContent = parseFloat(value).toFixed(1) + 'x';
+        }
+        
+        function updateRouletteWinChance(value) {
+            document.getElementById('rouletteWinValue').textContent = value + '%';
+        }
+        
+        function updateRouletteMulti(value) {
+            document.getElementById('rouletteMultiValue').textContent = value + 'x';
+        }
+        
+        function updateSlotsJackpotChance(value) {
+            document.getElementById('slotsJackpotValue').textContent = value + '%';
+        }
+        
+        function updateSlotsMulti(value) {
+            document.getElementById('slotsMultiValue').textContent = value + 'x';
+        }
+        
+        function saveChances() {
+            backupDB();
+            
+            const db = getDB();
+            
+            gameSettings.mines.winChance = parseInt(document.getElementById('minesWinChance').value);
+            gameSettings.mines.maxMultiplier = parseInt(document.getElementById('minesMaxMulti').value);
+            gameSettings.crash.lowCrashChance = parseInt(document.getElementById('crashLowChance').value);
+            gameSettings.crash.minCashout = parseFloat(document.getElementById('crashMinCashout').value);
+            gameSettings.roulette.winChance = parseFloat(document.getElementById('rouletteWinChance').value);
+            gameSettings.roulette.winMultiplier = parseInt(document.getElementById('rouletteMulti').value);
+            gameSettings.slots.jackpotChance = parseFloat(document.getElementById('slotsJackpotChance').value);
+            gameSettings.slots.jackpotMultiplier = parseInt(document.getElementById('slotsMulti').value);
+            
+            db.settings = gameSettings;
+            saveDB(db);
+            
+            alert('✅ Настройки шансов сохранены!');
+        }
+        
+        function adminAdd() {
+            const username = document.getElementById('adminUser').value.trim();
+            const amount = parseInt(document.getElementById('adminAmount').value);
+            
+            if (!username || !amount) {
+                alert('Заполните все поля');
+                return;
+            }
+            
+            backupDB();
+            const db = getDB();
+            
+            if (!db.users[username]) {
+                alert('Пользователь не найден');
+                return;
+            }
+            
+            db.users[username].balance += amount;
+            saveDB(db);
+            alert(`✅ Пользователю ${username} выдано ${amount} ⭐`);
+            
+            if (username === currentUser) {
+                updateUI();
+            }
+        }
+        
+        function adminRemove() {
+            const username = document.getElementById('adminUser').value.trim();
+            const amount = parseInt(document.getElementById('adminAmount').value);
+            
+            if (!username || !amount) {
+                alert('Заполните все поля');
+                return;
+            }
+            
+            backupDB();
+            const db = getDB();
+            
+            if (!db.users[username]) {
+                alert('Пользователь не найден');
+                return;
+            }
+            
+            db.users[username].balance = Math.max(0, db.users[username].balance - amount);
+            saveDB(db);
+            alert(`✅ У пользователя ${username} списано ${amount} ⭐`);
+            
+            if (username === currentUser) {
+                updateUI();
+            }
+        }
+        
+        function createPromo() {
+            const code = document.getElementById('newPromo').value.trim().toUpperCase();
+            const amount = parseInt(document.getElementById('newPromoAmount').value);
+            
+            if (!code || !amount || amount <= 0) {
+                alert('Заполните все поля');
+                return;
+            }
+            
+            backupDB();
+            const db = getDB();
+            
+            if (!db.promocodes) db.promocodes = {};
+            
+            if (db.promocodes[code]) {
+                alert('Промокод с таким кодом уже существует');
+                return;
+            }
+            
+            db.promocodes[code] = {
+                amount: amount,
+                created: new Date().toISOString(),
+                used: []
+            };
+            
+            saveDB(db);
+            alert(`✅ Промокод ${code} создан на сумму ${amount} ⭐`);
+            
+            document.getElementById('newPromo').value = '';
+            document.getElementById('newPromoAmount').value = '';
+        }
+        
+        // ====================
+        // ЭКСПОРТ/ИМПОРТ БАЗЫ ДАННЫХ
+        // ====================
+        function exportDB() {
+            const db = getDB();
+            const dataStr = JSON.stringify(db, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = 'bezdarmoney_db.json';
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+        
+        function importDB(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!confirm('Внимание! Импорт базы данных перезапишет все текущие данные. Продолжить?')) {
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const db = JSON.parse(e.target.result);
+                    localStorage.setItem(DB_NAME, JSON.stringify(db));
+                    alert('✅ База данных успешно импортирована!');
+                    location.reload();
+                } catch (error) {
+                    alert('Ошибка при импорте базы данных: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        // ====================
+        // ИНИЦИАЛИЗАЦИЯ
+        // ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            initDB();
+            
+            window.onclick = function(event) {
+                if (event.target.classList.contains('modal')) {
+                    hideModal();
+                }
+            };
+            
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    hideModal();
+                }
+            });
+            
+            const savedUser = localStorage.getItem('current_user');
+            const db = getDB();
+            if (savedUser && db.users[savedUser]) {
+                currentUser = savedUser;
+                showMainInterface();
+                updateUI();
+            }
+        });
+    </script>
+</body>
+</html>
